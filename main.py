@@ -1,17 +1,22 @@
 from __future__ import unicode_literals
 import json
 from parsivar import *
+from hazm import Normalizer as Hazm_Normalizer
+from collections import OrderedDict
+import re
 
 # TODO for 1-2:
-# user query
+# user query: only "" phrase left
 
-punctuations = [".", "،", "»", "«", "؛", "\"", ":", "؟", "!", ",", "(", ")", "-", "_", "…", "[", "]"]
+punctuations = [".", "،", "»", "«", "؛", ":", "؟", "!", ",", "(", ")", "-", "_", "…", "[", "]"]
 
 stop_words = ["هر", "بر", "تا", "به", "در", "از", "که", "را", "این", "آن", "و", "با", "هم", "برای", "پس"]
 
 docs_title = []
 docs_content = []
 docs_url = []
+
+inverted_index = {}  # {"term": {"doc_id": [positions]}}
 
 
 def read_file():
@@ -40,7 +45,9 @@ def stem(token):
 
 def normalize(string):
     _normalizer = Normalizer()
-    tokens = tokenize(_normalizer.normalize(string))
+    hazm_normalizer = Hazm_Normalizer()
+    hazmed = hazm_normalizer.normalize(string)
+    tokens = tokenize(_normalizer.normalize(hazmed))
     normal_tokens = []
     for token in tokens:
         temp = stem(token)
@@ -64,7 +71,7 @@ def preprocess(string):
 
 
 def inverted_index_construction(docs):
-    inverted_index = {}  # {"term": {"doc_id": [positions]}}
+    global inverted_index
     for doc_id, doc in enumerate(docs):
         doc_terms = preprocess(doc)
         for position, term in enumerate(doc_terms):
@@ -75,24 +82,90 @@ def inverted_index_construction(docs):
                     inverted_index[term][doc_id] = [position]
             else:
                 inverted_index[term] = {doc_id: [position]}
-    return inverted_index
 
 
-def process_user_query(query):
+def process_query(query):
+    not_docs = []
+    if "!" in query:
+        not_terms = preprocess(query.split("!")[1])
+        for not_term in not_terms:
+            not_docs.extend(inverted_index[not_term])
+        not_docs = set(not_docs)
+
+    if "\"" in query:
+        find_phrases(query)
+
+    docs_ranks = {}
     preprocessed_query = preprocess(query)
-    print(preprocessed_query)
+    for term in preprocessed_query:
+        if term in inverted_index:
+            for doc_id in inverted_index[term]:
+                if doc_id not in not_docs:
+                    if doc_id not in docs_ranks:
+                        docs_ranks[doc_id] = len(inverted_index[term][doc_id])
+                    else:
+                        docs_ranks[doc_id] = docs_ranks[doc_id] + len(inverted_index[term][doc_id])
+        else:
+            return "Invalid term in query!"
+    docs_ranks = dict(OrderedDict(sorted(docs_ranks.items())))
+    return docs_ranks
+
+
+def find_phrases(query):
+    phrase_docs = {}
+    phrases = re.search('"(.*)"', query).group(1).split('"')
+    for phrase in phrases:
+        if phrase.isspace() or not phrase:
+            continue
+        terms = phrase.split(" ")
+        intersection_docs = []
+        pairs = 0
+        for i in range(0, len(terms)):
+            for j in range(1, len(terms)):
+                if terms[i] != terms[j]:
+                    intersection_docs.extend(list(set(inverted_index[terms[i]]) & set(inverted_index[terms[j]])))
+                    pairs += 1
+        temp = -1
+        for doc in intersection_docs:
+            if intersection_docs.count(doc) == pairs and temp != doc:
+                temp = doc
+                print(phrase)
+                print(inverted_index[terms[0]][doc])
+                if phrase in phrase_docs:
+                    for term in terms:
+                        if phrase_docs[phrase][term] in phrase_docs[phrase]:
+                            phrase_docs[phrase][term].update({doc: inverted_index[term][doc]})
+
+                else:
+                    for term in terms:
+                        phrase_docs[phrase] = {term: {doc: inverted_index[term][doc]}}
+    print(phrase_docs)
 
 
 def docs_info(doc_id):
     return docs_title[doc_id], docs_url[doc_id]
 
 
+def term_frequency(term):
+    frequency = {}
+    if term in inverted_index:
+        for doc_id in inverted_index[term]:
+            frequency[str(doc_id)] = len(inverted_index[term][doc_id])
+    else:
+        return "There is no such term in the inverted index."
+
+    frequency["all"] = sum(frequency.values())
+
+    return frequency
+
+
 if __name__ == '__main__':
-    a = "این یک جمله می‌باشد. این جمله هم ویرگول، نیست!"
+    a = "این یک جمله می‌باشد. این سمینار جمله هم ویرگول، نیست!"
     b = "به گزارش ایسنا سمینار شیمی آلی از امروز ۱۱ شهریور ۱۳۹۶ در دانشگاه جمله علم و صنعت ایران آغاز به کار کرد. این " \
         "سمینار تا ۱۳ شهریور ادامه می یابد. "
-    x = [a, b]
-    # y = inverted_index_construction(docs_content)
-    # y = inverted_index_construction(x)
-    # print(json.dumps(y, indent=4, ensure_ascii=False))
-    process_user_query("این یک جمله می‌باشد.")
+    s = "ایران تحریم هسته‌ای سمینار آمریکا سمینار جمله ایران"
+
+    x = [a, b, s]
+    inverted_index_construction(x)
+    # print(json.dumps(inverted_index, indent=4, ensure_ascii=False))
+    find_phrases('ایران "تحریم هسته‌ای" "سمینار جمله ایران" ! ویرگول')
