@@ -3,30 +3,34 @@ import json
 from parsivar import *
 
 # TODO for 1-2:
-# separate inverted index for each doc, then merge and sort them all
-# posting size to be stored
-# title and url
 # user query
-# position in posting!
 
 punctuations = [".", "،", "»", "«", "؛", "\"", ":", "؟", "!", ",", "(", ")", "-", "_", "…", "[", "]"]
 
 stop_words = ["هر", "بر", "تا", "به", "در", "از", "که", "را", "این", "آن", "و", "با", "هم", "برای", "پس"]
 
+docs_title = []
+docs_content = []
+docs_url = []
 
-def read_file_content():
+
+def read_file():
+    global docs_content
+    global docs_title
+    global docs_url
+
     f = open('../data.json', encoding='utf8')
     data = json.load(f)
-    docs_content = []
     for i in data:
+        docs_title.append(data[i]["title"])
         docs_content.append(data[i]["content"])
+        docs_url.append(data[i]["url"])
     f.close()
-    return docs_content
 
 
-def tokenize(doc):
+def tokenize(string):
     _tokenizer = Tokenizer()
-    return _tokenizer.tokenize_words(doc)
+    return _tokenizer.tokenize_words(string)
 
 
 def stem(token):
@@ -34,9 +38,9 @@ def stem(token):
     return _stemmer.convert_to_stem(token)
 
 
-def normalize(doc):
+def normalize(string):
     _normalizer = Normalizer()
-    tokens = tokenize(_normalizer.normalize(doc))
+    tokens = tokenize(_normalizer.normalize(string))
     normal_tokens = []
     for token in tokens:
         temp = stem(token)
@@ -53,33 +57,34 @@ def removal(tokens, remove_list):
     return tokens
 
 
-def preprocess(docs):
-    preprocessed_terms = []  # {"a~1^90", "b~1^53", ... "a~3^0"} -> "term~docID^position"
-    doc_id = 0
-    for doc in docs:
-        normal_tokens = normalize(doc)
-        doc_terms = removal(removal(normal_tokens, stop_words), punctuations)
-        for i, term in enumerate(doc_terms):
-            preprocessed_terms.append(term + "~" + str(doc_id))
-        #      + "^" + str(i)
-        doc_id += 1
+def preprocess(string):
+    normal_tokens = normalize(string)
+    preprocessed_terms = removal(removal(normal_tokens, stop_words), punctuations)
     return preprocessed_terms
 
 
-def inverted_index_construction(preprocessed_terms):
+def inverted_index_construction(docs):
     inverted_index = {}  # {"term": {"doc_id": [positions]}}
-    preprocessed_terms.sort()
-    for term in preprocessed_terms:
-        extraction = term.split("~")
-        extracted_term = extraction[0]
-        extracted_doc_id = extraction[1]
-        if extracted_term in inverted_index:  # position in doc
-            if extracted_doc_id in inverted_index[extracted_term]:
-                print(extracted_term)
-            print(inverted_index[extracted_term][extracted_doc_id])
-        else:
-            inverted_index[extracted_term] = {extracted_doc_id: [0]}
+    for doc_id, doc in enumerate(docs):
+        doc_terms = preprocess(doc)
+        for position, term in enumerate(doc_terms):
+            if term in inverted_index:
+                if doc_id in inverted_index[term]:
+                    inverted_index[term][doc_id].append(position)
+                else:
+                    inverted_index[term][doc_id] = [position]
+            else:
+                inverted_index[term] = {doc_id: [position]}
     return inverted_index
+
+
+def process_user_query(query):
+    preprocessed_query = preprocess(query)
+    print(preprocessed_query)
+
+
+def docs_info(doc_id):
+    return docs_title[doc_id], docs_url[doc_id]
 
 
 if __name__ == '__main__':
@@ -87,9 +92,7 @@ if __name__ == '__main__':
     b = "به گزارش ایسنا سمینار شیمی آلی از امروز ۱۱ شهریور ۱۳۹۶ در دانشگاه جمله علم و صنعت ایران آغاز به کار کرد. این " \
         "سمینار تا ۱۳ شهریور ادامه می یابد. "
     x = [a, b]
-    # y = inverted_index_construction(read_file_content())
-    y = preprocess(x)
-    # print(y)
-    z = inverted_index_construction(y)
-    # print(z)
-    print(json.dumps(z, indent=4, ensure_ascii=False))
+    # y = inverted_index_construction(docs_content)
+    # y = inverted_index_construction(x)
+    # print(json.dumps(y, indent=4, ensure_ascii=False))
+    process_user_query("این یک جمله می‌باشد.")
