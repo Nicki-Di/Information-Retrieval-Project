@@ -89,7 +89,6 @@ def process_query(query):
     not_docs = []
     docs_ranks = {}
     phrases_docs_ranks = {}
-    ranks = {}
     exclude_terms = []
     clean_phrases = []
     docs_ranks_info = []
@@ -142,12 +141,11 @@ def process_query(query):
             for doc_id in docs_ranks:
                 if doc_id in phrases_docs_ranks:
                     docs_ranks[doc_id] += phrases_docs_ranks[doc_id]
-                    ranks[doc_id] = docs_ranks[doc_id]
 
-    ranks = dict(OrderedDict(sorted(ranks.items())))
-    for doc_id in ranks:
-        docs_ranks_info.append(f"#{doc_id} -> {docs_info(doc_id)} , rank: {ranks[doc_id]}")
-    return docs_ranks_info if ranks else "No match!"
+    docs_ranks = dict(OrderedDict(sorted(docs_ranks.items(), reverse=True)))
+    for doc_id in docs_ranks:
+        docs_ranks_info.append(f"#{doc_id} -> {docs_info(doc_id)} , rank: {docs_ranks[doc_id]}")
+    return docs_ranks_info if docs_ranks else "No match!"
 
 
 def find_phrases_docs(phrases, not_docs):
@@ -165,6 +163,7 @@ def find_phrases_docs(phrases, not_docs):
                 if terms[i] != terms[j]:
                     intersection_docs.extend(list(set(inverted_index[terms[i]]) & set(inverted_index[terms[j]])))
                     pairs_count += 1
+
         for intersection_doc in intersection_docs:
             if intersection_docs.count(intersection_doc) == pairs_count and temp != intersection_doc:
                 temp = intersection_doc
@@ -249,5 +248,5 @@ if __name__ == '__main__':
 
     x = [a, b, s]
     inverted_index_construction(x)
-    result = process_query('ایران "سمینار جمله"')
+    result = process_query('"تحریم هسته‌ای" آمریکا')
     print(result) if type(result) == str else print("\n".join(result))
