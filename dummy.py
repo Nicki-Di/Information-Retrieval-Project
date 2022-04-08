@@ -1,8 +1,13 @@
-# for i in data:
-# print(json.dumps(data, indent=4, ensure_ascii=False)) -> pretty print
-# print(json.dumps(docs["0"], indent=4, ensure_ascii=False))
-# print(docs["0"]["title"])
-# if term in inverted_index:  # position in doc
-#     inverted_index[term].append(doc_id)
+# return "No match!"
+# initial = iterate_positions(phrases_docs[phrase])
+# if phrases_ranks:
+#     for doc_id in phrases_ranks:
+#         if doc_id in initial:
+#             phrases_ranks[doc_id] += initial[doc_id]
+#         else:
+#             phrases_ranks[doc_id] = 0
 # else:
-#     inverted_index[term] = [doc_id]  # then sort, but dict can't have duplicate keys
+#     phrases_ranks = initial
+# print(phrase, phrases_ranks)
+#
+# return phrases_ranks -> thern filter rank 0 out

@@ -249,5 +249,5 @@ if __name__ == '__main__':
 
     x = [a, b, s]
     inverted_index_construction(x)
-    result = process_query('ایران "سمینار جمله" "شهریور می یابد"')
+    result = process_query('ایران "سمینار جمله"')
     print(result) if type(result) == str else print("\n".join(result))
