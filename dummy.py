@@ -1,13 +1,8 @@
-# return "No match!"
-# initial = iterate_positions(phrases_docs[phrase])
-# if phrases_ranks:
-#     for doc_id in phrases_ranks:
-#         if doc_id in initial:
-#             phrases_ranks[doc_id] += initial[doc_id]
-#         else:
-#             phrases_ranks[doc_id] = 0
-# else:
-#     phrases_ranks = initial
-# print(phrase, phrases_ranks)
+# a = "این یک جمله آمریکا می‌باشد. این سمینار جمله هم ویرگول، نیست!"
+# b = "به گزارش ایسنا سمینار شیمی آلی از امروز ۱۱ شهریور ۱۳۹۶ در دانشگاه جمله علم و سمینار جمله ایران صنعت ایران آغاز به کار کرد. سمینار جمله ایران این " \
+#     "سمینار تا ویرگول ۱۳ شهریور می یابد. "
+# s = "ایران سمینار جمله تحریم هسته‌ای سمینار آمریکا سمینار جمله ایران"
 #
-# return phrases_ranks -> thern filter rank 0 out
+# x = [a, b, s]
+# inverted_index_construction(x)
+# result = process_query('"تحریم هسته‌ای" آمریکا')

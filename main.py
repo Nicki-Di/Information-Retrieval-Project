@@ -113,8 +113,6 @@ def process_query(query):
             clean_phrases.append(' '.join(preprocess(phrase)))
 
         phrases_docs_ranks = find_phrases_docs(clean_phrases, not_docs)
-        if phrases_docs_ranks == "No match!":
-            return "No match!"
 
         for phrases_docs_rank in phrases_docs_ranks:
             if phrases_docs_rank in not_docs:
@@ -126,6 +124,7 @@ def process_query(query):
 
     exclude_terms = [item for sublist in exclude_terms for item in sublist]
     preprocessed_query = [item for item in preprocessed_query if item not in exclude_terms]
+
     for term in preprocessed_query:
         if term in inverted_index:
             for doc_id in inverted_index[term]:
@@ -137,12 +136,14 @@ def process_query(query):
         else:
             return "Invalid term in query!"
 
-        if phrases_docs_ranks:
-            for doc_id in docs_ranks:
-                if doc_id in phrases_docs_ranks:
-                    docs_ranks[doc_id] += phrases_docs_ranks[doc_id]
+    if phrases_docs_ranks:
+        for doc_id in phrases_docs_ranks:
+            if doc_id in docs_ranks:
+                docs_ranks[doc_id] += phrases_docs_ranks[doc_id]
+            else:
+                docs_ranks[doc_id] = phrases_docs_ranks[doc_id]
 
-    docs_ranks = dict(OrderedDict(sorted(docs_ranks.items(), reverse=True)))
+    docs_ranks = dict(OrderedDict(sorted(docs_ranks.items(), key=lambda item: item[1], reverse=True)))
     for doc_id in docs_ranks:
         docs_ranks_info.append(f"#{doc_id} -> {docs_info(doc_id)} , rank: {docs_ranks[doc_id]}")
     return docs_ranks_info if docs_ranks else "No match!"
@@ -182,7 +183,7 @@ def find_phrases_docs(phrases, not_docs):
                     for term in terms:
                         doc_dict[doc_id].append(inverted_index[term][doc_id])
         else:
-            return "No match!"
+            return {}
         initial = iterate_positions(phrases_docs[phrase])
         if phrases_ranks:
             for doc_id in initial:
@@ -192,7 +193,6 @@ def find_phrases_docs(phrases, not_docs):
                     phrases_ranks[doc_id] = initial[doc_id]
         else:
             phrases_ranks = initial
-
     return phrases_ranks
 
 
@@ -237,10 +237,6 @@ def cache_inverted_index():
 
 
 if __name__ == '__main__':
-    # read_file()
-    # inverted_index_construction(docs_content)
-    # cache_inverted_index()
-    # print("\n".join(process_query('"تحریم هسته‌ای" آمریکا ! ایران')))
     a = "این یک جمله آمریکا می‌باشد. این سمینار جمله هم ویرگول، نیست!"
     b = "به گزارش ایسنا سمینار شیمی آلی از امروز ۱۱ شهریور ۱۳۹۶ در دانشگاه جمله علم و سمینار جمله ایران صنعت ایران آغاز به کار کرد. سمینار جمله ایران این " \
         "سمینار تا ویرگول ۱۳ شهریور می یابد. "
@@ -248,5 +244,5 @@ if __name__ == '__main__':
 
     x = [a, b, s]
     inverted_index_construction(x)
-    result = process_query('"تحریم هسته‌ای" آمریکا')
+    result = process_query('ایران')
     print(result) if type(result) == str else print("\n".join(result))
