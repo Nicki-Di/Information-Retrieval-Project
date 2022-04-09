@@ -9,9 +9,9 @@ punctuations = [".", "،", "»", "«", "؛", ":", "؟", "!", ",", "(", ")", "-",
 
 stop_words = ["هر", "بر", "تا", "به", "در", "از", "که", "را", "این", "آن", "و", "با", "هم", "برای", "پس"]
 
-docs_title = ["x", "y", "z"]
+docs_title = []
 docs_content = []
-docs_url = ["x", "y", "z"]
+docs_url = []
 
 inverted_index = {}  # {"term": {"doc_id": [positions]}}
 
@@ -145,7 +145,7 @@ def process_query(query):
 
     docs_ranks = dict(OrderedDict(sorted(docs_ranks.items(), key=lambda item: item[1], reverse=True)))
     for doc_id in docs_ranks:
-        docs_ranks_info.append(f"#{doc_id} -> {docs_info(doc_id)} , rank: {docs_ranks[doc_id]}")
+        docs_ranks_info.append(f"#{int(doc_id)} -> {docs_info(int(doc_id))} , rank: {docs_ranks[doc_id]}")
     return docs_ranks_info if docs_ranks else "No match!"
 
 
@@ -231,18 +231,37 @@ def term_frequency(term):
 
 
 def cache_inverted_index():
-    f = open("inverted_index.txt", "w", encoding='utf8')
+    f = open("inverted_index.json", "w", encoding='utf8')
     f.write(json.dumps(inverted_index))
     f.close()
 
+    f = open("titles.json", "w", encoding='utf8')
+    f.write(json.dumps(docs_title))
+    f.close()
+
+    f = open("urls.json", "w", encoding='utf8')
+    f.write(json.dumps(docs_url))
+    f.close()
+
+
+def read_inverted_index_from_cache():
+    global inverted_index
+    global docs_title
+    global docs_url
+    f = open('inverted_index.json', encoding='utf8')
+    inverted_index = json.load(f)
+
+    f = open('titles.json', encoding='utf8')
+    docs_title = json.load(f)
+
+    f = open('urls.json', encoding='utf8')
+    docs_url = json.load(f)
+
 
 if __name__ == '__main__':
-    a = "این یک جمله آمریکا می‌باشد. این هم ویرگول، نیست!"
-    b = "به گزارش ایسنا سمینار شیمی آلی از امروز ۱۱ شهریور ۱۳۹۶ در دانشگاه جمله علم و سمینار جمله ایران صنعت ایران آغاز به کار کرد. سمینار جمله ایران این " \
-        "سمینار تا ویرگول ۱۳ شهریور می یابد. "
-    s = "ایران سمینار جمله تحریم هسته‌ای سمینار آمریکا سمینار جمله ایران"
-
-    x = [a, b, s]
-    inverted_index_construction(x)
-    result = process_query('"سمینار جمله"')
+    # read_inverted_index_from_cache()
+    read_file()
+    inverted_index_construction(docs_content)
+    cache_inverted_index()
+    result = process_query('ایران')
     print(result) if type(result) == str else print("\n".join(result))
