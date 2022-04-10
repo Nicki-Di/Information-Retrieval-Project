@@ -5,4 +5,4 @@
 #
 # x = [a, b, s]
 # inverted_index_construction(x)
-# result = process_query('"تحریم هسته‌ای" آمریکا')
+# result1 = process_query('"تحریم هسته‌ای" آمریکا')
