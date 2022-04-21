@@ -1,9 +1,13 @@
+import json
+from google.colab import drive
 from __future__ import unicode_literals
 import json
 from parsivar import *
 from hazm import Normalizer as Hazm_Normalizer
 from collections import OrderedDict
 import re
+
+drive.mount('/content/drive')
 
 punctuations = [".", "،", "»", "«", "؛", ":", "؟", "!", ",", "(", ")", "-", "_", "…", "[", "]"]
 
@@ -21,13 +25,17 @@ def read_file():
     global docs_content
     global docs_title
     global docs_url
-
-    f = open('../data.json', encoding='utf8')
+    f = open('/content/drive/MyDrive/Semester 8/Information Retrieval/Project/data.json', encoding='utf8')
     data = json.load(f)
+    # counter = 0
     for i in data:
-        docs_title.append(data[i]["title"])
-        docs_content.append(data[i]["content"])
-        docs_url.append(data[i]["url"])
+      # if counter < 10:
+      docs_title.append(data[i]["title"])
+      docs_content.append(data[i]["content"])
+      docs_url.append(data[i]["url"])
+        # counter +=1
+      # else:
+        # break   
     f.close()
 
 
@@ -136,7 +144,7 @@ def process_query(query):
         else:
             return "Invalid term in query!"
 
-    if phrases_docs_ranks:
+    if phrases_docs_ranks != "Invalid term in query!":
         for doc_id in phrases_docs_ranks:
             if doc_id in docs_ranks:
                 docs_ranks[doc_id] += phrases_docs_ranks[doc_id]
@@ -162,8 +170,11 @@ def find_phrases_docs(phrases, not_docs):
         for i in range(0, len(terms)):
             for j in range(1, len(terms)):
                 if terms[i] != terms[j]:
-                    intersection_docs.extend(list(set(inverted_index[terms[i]]) & set(inverted_index[terms[j]])))
-                    pairs_count += 1
+                    if terms[i] in inverted_index and terms[j] in inverted_index:
+                        intersection_docs.extend(list(set(inverted_index[terms[i]]) & set(inverted_index[terms[j]])))
+                        pairs_count += 1
+                    else:
+                        return "Invalid term in query!"
 
         for intersection_doc in intersection_docs:
             if intersection_docs.count(intersection_doc) == pairs_count and temp != intersection_doc:
@@ -230,16 +241,16 @@ def term_frequency(term):
     return frequency
 
 
-def cache_inverted_index():
-    f = open("inverted_index.json", "w", encoding='utf8')
+def cache_inverted_index(mode="w"):
+    f = open("/content/drive/MyDrive/Semester 8/Information Retrieval/Project/Colab/inverted_index.json", mode, encoding='utf8')
     f.write(json.dumps(inverted_index))
     f.close()
 
-    f = open("titles.json", "w", encoding='utf8')
+    f = open("/content/drive/MyDrive/Semester 8/Information Retrieval/Project/Colab/titles.json", mode, encoding='utf8')
     f.write(json.dumps(docs_title))
     f.close()
 
-    f = open("urls.json", "w", encoding='utf8')
+    f = open("/content/drive/MyDrive/Semester 8/Information Retrieval/Project/Colab/urls.json", mode, encoding='utf8')
     f.write(json.dumps(docs_url))
     f.close()
 
@@ -248,13 +259,13 @@ def read_inverted_index_from_cache():
     global inverted_index
     global docs_title
     global docs_url
-    f = open('inverted_index.json', encoding='utf8')
+    f = open('/content/drive/MyDrive/Semester 8/Information Retrieval/Project/Colab/inverted_index.json', encoding='utf8')
     inverted_index = json.load(f)
 
-    f = open('titles.json', encoding='utf8')
+    f = open('/content/drive/MyDrive/Semester 8/Information Retrieval/Project/Colab/titles.json', encoding='utf8')
     docs_title = json.load(f)
 
-    f = open('urls.json', encoding='utf8')
+    f = open('/content/drive/MyDrive/Semester 8/Information Retrieval/Project/Colab/urls.json', encoding='utf8')
     docs_url = json.load(f)
 
 
@@ -263,5 +274,13 @@ if __name__ == '__main__':
     read_file()
     inverted_index_construction(docs_content)
     cache_inverted_index()
-    result = process_query('ایران')
+    # result = process_query('والیبال')
+    # result = process_query('تحریم‌های آمریکا علیه ایران')
+    # result = process_query('تحریم‌های آمریکا ! ایران')
+    # result = process_query('"کنگره ضدتروریست"')
+    # result = process_query('"تحریم هسته‌ای" آمریکا ! ایران')
+    result = process_query('اورشلیم ! صهیونیست')
+
+    # print(json.dumps(inverted_index, indent=4, ensure_ascii=False))
+
     print(result) if type(result) == str else print("\n".join(result))
