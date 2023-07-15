@@ -1,5 +1,5 @@
 # Information Retrieval (Search engine) 🔎
-*Analysis of over a million news posts on [Fars News](https://www.farsnews.ir/) and prepare to answer queries*
+*Analysis of over a million news posts on [Fars News](https://www.farsnews.ir/) and prepare them to answer queries*
 
 In this project, I've implemented a search engine with Python to process and index news website information and answer user queries. 
 - Written in [Python 3](https://www.python.org/) 🐍
